@@ -371,6 +371,7 @@ def _extract_bit_value(data, number_of_bits, offset):
 # Retrieve the contents of the status register of the nRF24L01, and return it as
 # a dictionary.
 def get_status():
+    # TODO: Need to add the functionality to retrieve the FIFO_STATUS, as well.
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         ser.write(bytes([COMMANDS['NOP']]))    # Send an empty packet
         # Read the status register. (convert  bytes data type to int)
