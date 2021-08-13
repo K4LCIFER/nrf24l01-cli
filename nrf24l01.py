@@ -46,7 +46,7 @@ COMMANDS = {
 # Register mnemonics and addresses with their bit mnemonics and bit positions.
 # See Section 9.1 Table 27.
 REGISTER_MAP = {
-        'CONFIG' : {
+        'CONFIG': {
             'ADDRESS'     : 0x00,
             'MASK_RX_DR'  : 6,
             'MASK_TX_DS'  : 5,
@@ -72,113 +72,113 @@ REGISTER_MAP = {
             'ERX_P3' : 3,
             'ERX_P2' : 2,
             'ERX_P1' : 1,
-            'ERX_P0' : 0,
+            'ERX_P0' : 0
             },
         'SETUP_AW': { 
             'ADDRESS' : 0x03,
             'AW'      : 0  # Bit-range 1:0
             },
-        'SETUP_RETR' : {
-            'ADDRESS': 0x04,
-            'ARD' : 4, # Bit-range 7:4
-            'ARC' : 0, # Bit-range 3:0
+        'SETUP_RETR': {
+            'ADDRESS' : 0x04,
+            'ARD'     : 4,  # Bit-range 7:4
+            'ARC'     : 0   # Bit-range 3:0
             },
-        'RF_CH' : {
+        'RF_CH': {
             'ADDRESS': 0x05
             # Bit of the same name at bit-6:0
             },
-        'RF_SETUP' : {
-            'ADDRESS': 0x06,
+        'RF_SETUP': {
+            'ADDRESS'    : 0x06,
             'CONT_WAVE'  : 7,
             'RF_DR_LOW'  : 5,
             'PLL_LOCK'   : 4,
             'RF_DR_HIGH' : 3,
-            'RF_PWR'     : 1,  # Bit-range 2:1
+            'RF_PWR'     : 1    # Bit-range 2:1
             },
-        'STATUS' :{
-            'ADDRESS': 0x07,
+        'STATUS': {
+            'ADDRESS' : 0x07,
             'RX_DR'   : 6,
             'TX_DS'   : 5,
             'MAX_RT'  : 4,
-            'RX_P_NO' : 1, # Bit-range 3:1
-            'TX_FULL' : 0,
+            'RX_P_NO' : 1,  # Bit-range 3:1
+            'TX_FULL' : 0
             },
-        'OBSERVE_TX' : {
-            'ADDRESS': 0x08,
-            'PLOS_CNT' : 4,    # Bit-range 7:4
-            'ARC_CNT'  : 0,    # Bit-range 3:0
+        'OBSERVE_TX': {
+            'ADDRESS'  : 0x08,
+            'PLOS_CNT' : 4, # Bit-range 7:4
+            'ARC_CNT'  : 0  # Bit-range 3:0
             },
-        'RPD' : {
-            'ADDRESS': 0x09  # RPD or CD?
+        'RPD': {
+            'ADDRESS': 0x09 # RPD or CD?
             # Bit is of the same name at bit-0
             },
-        'RX_ADDR_P0' :{
+        'RX_ADDR_P0': {
             'ADDRESS': 0x0A
             },
-        'RX_ADDR_P1' :{
+        'RX_ADDR_P1': {
             'ADDRESS': 0x0B
             },
-        'RX_ADDR_P2' :{
+        'RX_ADDR_P2': {
             'ADDRESS': 0x0C
             },
-        'RX_ADDR_P3' :{
+        'RX_ADDR_P3': {
             'ADDRESS': 0x0D
             },
-        'RX_ADDR_P4' :{
+        'RX_ADDR_P4': {
             'ADDRESS': 0x0E
             },
-        'RX_ADDR_P5' :{
+        'RX_ADDR_P5': {
             'ADDRESS': 0x0F
             },
-        'TX_ADDR' :{
+        'TX_ADDR': {
             'ADDRESS': 0x10
             },
-        'RX_PW_P0' :{
-            'ADDRESS':0x11
+        'RX_PW_P0': {
+            'ADDRESS': 0x11
             # Bit is of the same name at bit-5:0
             },
-        'RX_PW_P1' : {
-            'ADDRESS':0x12
+        'RX_PW_P1': {
+            'ADDRESS': 0x12
             # Bit is of the same name at bit-5:0
             },
-        'RX_PW_P2' : {
+        'RX_PW_P2': {
             'ADDRESS': 0x13
             # Bit is of the same name at bit-5:0
             },
-        'RX_PW_P3' : {
-            'ADDRESS':0x14
+        'RX_PW_P3': {
+            'ADDRESS': 0x14
             # Bit is of the sa:me name at bit-5:0
             },
-        'RX_PW_P4' : {
+        'RX_PW_P4': {
             'ADDRESS': 0x15
             # Bit is of the same name at bit-5:0
             },
-        'RX_PW_P5' : {
-            'ADDRESS':0x16
+        'RX_PW_P5': {
+            'ADDRESS': 0x16
             # Bit is of the same name at bit-5:0
             },
-        'FIFO_STATUS' : {
-            'ADDRESS': 0x17,
+        'FIFO_STATUS': {
+            'ADDRESS'  : 0x17,
             'TX_REUSE' : 6,
             # TX_FULL   # Repeat from the status register
             'TX_EMPTY' : 4,
             'RX_FULL'  : 1,
-            'RX_EMPTY' : 0,
+            'RX_EMPTY' : 0
             },
-        'DYNPD' : {
-            'ADDRESS':0x1C,
-            'DPL_P5' : 5,
-            'DPL_P4' : 4,
-            'DPL_P3' : 3,
-            'DPL_P2' : 2,
-            'DPL_P1' : 1,
-            'DPL_P0' : 0,
+        'DYNPD': {
+            'ADDRESS' :0x1C,
+            'DPL_P5'  : 5,
+            'DPL_P4'  : 4,
+            'DPL_P3'  : 3,
+            'DPL_P2'  : 2,
+            'DPL_P1'  : 1,
+            'DPL_P0'  : 0
             },
-        'FEATURE' :{ 
-            'ADDRESS': 0x1D,
+        'FEATURE': { 
+            'ADDRESS'    : 0x1D,
             'EN_DPL'     : 2,
             'EN_ACK_PAY' : 1,
-            'EN_DYN_ACK' : 0,
+            'EN_DYN_ACK' : 0
             }
         }
 
