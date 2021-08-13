@@ -20,11 +20,25 @@
 # [this](https://github.com/maniacbug/RF24/blob/master/nRF24L01.h) header file.
 # 2021-08-11
 ################################################################################
-# TODO: Add a datasheet reference here?
+# 1. [nRF24L01 Datasheet](<project_directory>/nRF24L01-datasheet.pdf)
 ################################################################################
 
+import serial
+import platform
 
-# Command names and words. See Section 8.3.1 Table 19.
+
+
+BAUD = 9600
+if platform.system() == 'Linux':
+    PORT = '/dev/ttyUSB0'
+elif platform.system() == 'Windows':
+    PORT = 'COM99'  # I'm not sure what COM port this should be.
+else:
+    print("Platform \"" + platform.system() + "\" is not supported!")
+
+
+
+# Command names and words. See [1]Section 8.3.1 Table 19.
 # NOTE: I am not sure if it is correct to vertically align these in this
 # scenario. According to PEP8, it seems to be incorrect. Further research is 
 # required.
@@ -44,73 +58,181 @@ COMMANDS = {
 
 
 # Register mnemonics and addresses with their bit mnemonics and bit positions.
-# See Section 9.1 Table 27.
+# See [1]Section 9.1 Table 27.
 REGISTER_MAP = {
         'CONFIG': {
-            'ADDRESS'     : 0x00,
-            'MASK_RX_DR'  : 6,
-            'MASK_TX_DS'  : 5,
-            'MASK_MAX_RT' : 4,
-            'EN_CRC'      : 3,
-            'CRCO'        : 2,
-            'PWR_UP'      : 1,
-            'PRIM_RX'     : 0
+            'ADDRESS': 0x00,
+            'MASK_RX_DR': {
+                'LENGTH': 1,
+                'OFFSET': 6
+                },
+            'MASK_TX_DS': {
+                'LENGTH': 1,
+                'OFFSET': 5
+                },
+            'MASK_MAX_RT': {
+                'LENGTH': 1,
+                'OFFSET': 4
+                },
+            'EN_CRC': {
+                'LENGTH': 1,
+                'OFFSET': 3
+                },
+            'CRCO': {
+                'LENGTH': 1,
+                'OFFSET': 2
+                },
+            'PWR_UP': {
+                'LENGTH': 1,
+                'OFFSET': 1
+                },
+            'PRIM_RX': {
+                'LENGTH': 1,
+                'OFFSET': 0
+                }
             },
         'EN_AA': {
-            'ADDRESS' : 0x01,
-            'ENAA_P5' : 5,
-            'ENAA_P4' : 4,
-            'ENAA_P3' : 3,
-            'ENAA_P2' : 2,
-            'ENAA_P1' : 1,
-            'ENAA_P0' : 0
+            'ADDRESS': 0x01,
+            'ENAA_P5': {
+                'LENGTH': 1,
+                'OFFSET': 5
+                },
+            'ENAA_P4': {
+                'LENGTH': 1,
+                'OFFSET': 4
+                },
+            'ENAA_P3': {
+                'LENGTH': 1,
+                'OFFSET': 3
+                },
+            'ENAA_P2': {
+                'LENGTH': 1,
+                'OFFSET': 2
+                },
+            'ENAA_P1': {
+                'LENGTH': 1,
+                'OFFSET': 1
+                },
+            'ENAA_P0': {
+                'LENGTH': 1,
+                'OFFSET': 0
+                }
             },
         'EN_RXADDR': {
             'ADDRESS': 0x02,
-            'ERX_P5' : 5,
-            'ERX_P4' : 4,
-            'ERX_P3' : 3,
-            'ERX_P2' : 2,
-            'ERX_P1' : 1,
-            'ERX_P0' : 0
+            'ERX_P5': {
+                'LENGTH': 1,
+                'OFFSET': 5
+                },
+            'ERX_P4': {
+                'LENGTH': 1,
+                'OFFSET': 4
+                },
+            'ERX_P3': {
+                'LENGTH': 1,
+                'OFFSET': 3
+                },
+            'ERX_P2': {
+                'LENGTH': 1,
+                'OFFSET': 2
+                },
+            'ERX_P1': {
+                'LENGTH': 1,
+                'OFFSET': 1
+                },
+            'ERX_P0': {
+                'LENGTH': 1,
+                'OFFSET': 0
+                }
             },
         'SETUP_AW': { 
-            'ADDRESS' : 0x03,
-            'AW'      : 0  # Bit-range 1:0
+            'ADDRESS': 0x03,
+            'AW': {
+                'LENGTH': 2,
+                'OFFSET': 0
+                }
             },
         'SETUP_RETR': {
-            'ADDRESS' : 0x04,
-            'ARD'     : 4,  # Bit-range 7:4
-            'ARC'     : 0   # Bit-range 3:0
+            'ADDRESS': 0x04,
+            'ARD': {
+                'LENGTH': 4,
+                'OFFSET': 4
+                },
+            'ARC': {
+                'LENGTH': 4,
+                'OFFSET': 0
+                }
             },
         'RF_CH': {
-            'ADDRESS': 0x05
-            # Bit of the same name at bit-6:0
+            'ADDRESS': 0x05,
+            'RF_CH': {
+                'LENGTH': 7,
+                'OFFSET': 0
+                }
             },
         'RF_SETUP': {
-            'ADDRESS'    : 0x06,
-            'CONT_WAVE'  : 7,
-            'RF_DR_LOW'  : 5,
-            'PLL_LOCK'   : 4,
-            'RF_DR_HIGH' : 3,
-            'RF_PWR'     : 1    # Bit-range 2:1
+            'ADDRESS': 0x06,
+            'CONT_WAVE': {
+                'LENGTH': 1,
+                'OFFSET': 7
+                },
+            'RF_DR_LOW': {
+                'LENGTH': 1,
+                'OFFSET': 5
+                },
+            'PLL_LOCK': {
+                'LENGTH': 1,
+                'OFFSET': 4
+                },
+            'RF_DR_HIGH': {
+                'LENGTH': 1,
+                'OFFSET': 3
+                },
+            'RF_PWR': {
+                'LENGTH': 2,
+                'OFFSET': 1
+                }
             },
         'STATUS': {
-            'ADDRESS' : 0x07,
-            'RX_DR'   : 6,
-            'TX_DS'   : 5,
-            'MAX_RT'  : 4,
-            'RX_P_NO' : 1,  # Bit-range 3:1
-            'TX_FULL' : 0
+            'ADDRESS': 0x07,
+            'RX_DR': {
+                'LENGTH': 1,
+                'OFFSET': 6
+                },
+            'TX_DS': {
+                'LENGTH': 1,
+                'OFFSET': 5
+                },
+            'MAX_RT': {
+                'LENGTH': 1,
+                'OFFSET': 4
+                },
+            'RX_P_NO': {
+                'LENGTH': 3,
+                'OFFSET': 1
+                },
+            'TX_FULL': {
+                'LENGTH': 1,
+                'OFFSET': 0
+                },
             },
         'OBSERVE_TX': {
-            'ADDRESS'  : 0x08,
-            'PLOS_CNT' : 4, # Bit-range 7:4
-            'ARC_CNT'  : 0  # Bit-range 3:0
+            'ADDRESS': 0x08,
+            'PLOS_CNT': {
+                'LENGTH': 4,
+                'OFFSET': 4
+                },
+            'ARC_CNT': {
+                'LENGTH': 4,
+                'OFFSET': 0
+                }
             },
-        'RPD': {
-            'ADDRESS': 0x09 # RPD or CD?
-            # Bit is of the same name at bit-0
+        'RPD': { # RPD or CD?
+            'ADDRESS': 0x09,
+            'RPD': {
+                'LENGTH': 1,
+                'OFFSET': 0
+                }
             },
         'RX_ADDR_P0': {
             'ADDRESS': 0x0A
@@ -134,51 +256,145 @@ REGISTER_MAP = {
             'ADDRESS': 0x10
             },
         'RX_PW_P0': {
-            'ADDRESS': 0x11
-            # Bit is of the same name at bit-5:0
+            'ADDRESS': 0x11,
+            'RX_PW_P0': {
+                'LENGTH': 6,
+                'OFFSET': 0
+                }
             },
         'RX_PW_P1': {
-            'ADDRESS': 0x12
-            # Bit is of the same name at bit-5:0
+            'ADDRESS': 0x12,
+            'RX_PW_P1': {
+                'LENGTH': 6,
+                'OFFSET': 0
+                }
             },
         'RX_PW_P2': {
-            'ADDRESS': 0x13
-            # Bit is of the same name at bit-5:0
+            'ADDRESS': 0x13,
+            'RX_PW_P2': {
+                'LENGTH': 6,
+                'OFFSET': 0
+                }
             },
         'RX_PW_P3': {
-            'ADDRESS': 0x14
-            # Bit is of the sa:me name at bit-5:0
+            'ADDRESS': 0x14,
+            'RX_PW_P3': {
+                'LENGTH': 6,
+                'OFFSET': 0
+                }
             },
         'RX_PW_P4': {
-            'ADDRESS': 0x15
-            # Bit is of the same name at bit-5:0
+            'ADDRESS': 0x15,
+            'RX_PW_P4': {
+                'LENGTH': 6,
+                'OFFSET': 0
+                }
             },
         'RX_PW_P5': {
-            'ADDRESS': 0x16
-            # Bit is of the same name at bit-5:0
+            'ADDRESS': 0x16,
+            'RX_PW_P5': {
+                'LENGTH': 6,
+                'OFFSET': 0
+                }
             },
         'FIFO_STATUS': {
-            'ADDRESS'  : 0x17,
-            'TX_REUSE' : 6,
-            # TX_FULL   # Repeat from the status register
-            'TX_EMPTY' : 4,
-            'RX_FULL'  : 1,
-            'RX_EMPTY' : 0
+            'ADDRESS': 0x17,
+            'TX_REUSE': {
+                'LENGTH': 1,
+                'OFFSET': 6
+                },
+            'TX_FULL': {
+                'LENGTH': 1,
+                'OFFSET': 5
+                },
+            'TX_EMPTY': {
+                'LENGTH': 1,
+                'OFFSET': 4
+                },
+            'RX_FULL': {
+                'LENGTH': 1,
+                'OFFSET': 1
+                },
+            'RX_EMPTY': {
+                'LENGTH': 1,
+                'OFFSET': 0
+                }
             },
         'DYNPD': {
-            'ADDRESS' :0x1C,
-            'DPL_P5'  : 5,
-            'DPL_P4'  : 4,
-            'DPL_P3'  : 3,
-            'DPL_P2'  : 2,
-            'DPL_P1'  : 1,
-            'DPL_P0'  : 0
+            'ADDRESS':0x1C,
+            'DPL_P5': {
+                'LENGTH': 1,
+                'OFFSET': 5
+                },
+            'DPL_P4': {
+                'LENGTH': 1,
+                'OFFSET': 4
+                },
+            'DPL_P3': {
+                'LENGTH': 1,
+                'OFFSET': 3
+                },
+            'DPL_P2': {
+                'LENGTH': 1,
+                'OFFSET': 2
+                },
+            'DPL_P1': {
+                'LENGTH': 1,
+                'OFFSET': 1
+                },
+            'DPL_P0': {
+                'LENGTH': 1,
+                'OFFSET': 0
+                }
             },
-        'FEATURE': { 
-            'ADDRESS'    : 0x1D,
-            'EN_DPL'     : 2,
-            'EN_ACK_PAY' : 1,
-            'EN_DYN_ACK' : 0
+        'FEATURE': {
+            'ADDRESS': 0x1D,
+            'EN_DPL': {
+                'LENGTH': 1,
+                'OFFSET': 2
+                },
+            'EN_ACK_PAY': {
+                'LENGTH': 1,
+                'OFFSET': 1
+                },
+            'EN_DYN_ACK': {
+                'LENGTH': 1,
+                'OFFSET': 0
+                }
             }
         }
 
+# Extracts the value from one or more bits in binary data.
+def _extract_bit_value(data, number_of_bits, offset):
+    return ((1 << number_of_bits) - 1) & (data >> offset)
+
+# Retrieve the contents of the status register of the nRF24L01, and return it as
+# a dictionary.
+def get_status():
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        ser.write(bytes([COMMANDS['NOP']]))    # Send an empty packet
+        # Read the status register. (convert  bytes data type to int)
+        status = int.from_bytes(ser.read(1), byteorder='big',
+                signed=False)
+
+    # Separate each portion of the received status register data into its
+    # separate bit mnemonic sections.
+    status_register = {}
+    status_register['RAW'] = status # Raw received data
+    status_register['RX_DR'] = _extract_bit_value(status,
+        REGISTER_MAP['STATUS']['RX_DR']['LENGTH'],
+        REGISTER_MAP['STATUS']['RX_DR']['OFFSET'])
+    status_register['TX_DS'] = _extract_bit_value(status,
+        REGISTER_MAP['STATUS']['TX_DS']['LENGTH'],
+        REGISTER_MAP['STATUS']['TX_DS']['OFFSET'])
+    status_register['MAX_RT'] = _extract_bit_value(status,
+        REGISTER_MAP['STATUS']['MAX_RT']['LENGTH'],
+        REGISTER_MAP['STATUS']['MAX_RT']['OFFSET'])
+    status_register['RX_P_NO'] = _extract_bit_value(status,
+        REGISTER_MAP['STATUS']['RX_P_NO']['LENGTH'],
+        REGISTER_MAP['STATUS']['RX_P_NO']['OFFSET'])
+    status_register['TX_FULL'] = _extract_bit_value(status,
+        REGISTER_MAP['STATUS']['TX_FULL']['LENGTH'],
+        REGISTER_MAP['STATUS']['TX_FULL']['OFFSET'])
+
+    return status_register
