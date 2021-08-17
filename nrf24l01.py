@@ -300,6 +300,8 @@ def r_register(register_name):
         # Save an entry for the raw returned data.
         uart_response_formatted['RAW'] = uart_response
         # TODO: Add the returned status register to the returned dictionary.
+        # There is an issue where with the STATUS register is included in the
+        # final data, so it must be removed.
         # The following is a special case of the registers in the nRF24L01. If
         # a register has only one byte associated with it, then it will always
         # have bit mnemonics describing the bits that are at the specified
@@ -376,7 +378,7 @@ def w_register(register_name, payload):
         elif isinstance(payload, int):
             ser.write(payload.to_bytes(1, 'big'))
         # Read and return the status register.
-        # TODO: Add the status register to the returned data dictionary.
+        # TODO: Need to add the status register to the returned data dictionary.
         uart_response = int.from_bytes(ser.read(1), 'big')
         uart_response_formatted = {}
         uart_response_formatted['RAW'] = uart_response
@@ -384,7 +386,26 @@ def w_register(register_name, payload):
 
 
 def r_rx_payload():
-    return
+    payload_length = 33
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit UART headers:
+        # Transmit UART Command length: One command word
+        ser.write((1).to_bytes(1, 'big'))
+        # Transmit SPI transfer length: 1 command byte + 32 data bytes
+        # See [1] Section 8.3.1 Table 19
+        ser.write((payload_length).to_bytes(1, 'big'))
+        # Transmit the Command byte
+        ser.write(COMMANDS['R_RX_PAYLOAD'].to_bytes(1, 'big'))
+        # Read and return the Rx Payload, and the Status Register data.
+        # uart_response = int.from_bytes(ser.read(1), 'big')
+        uart_response = ser.read(payload_length)
+        uart_response_formatted = {}
+        # NOTE: Should data be in bytes or int? bytes is probably more readable
+        # and useable than int for the raw data.
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
+        uart_response_formatted['PAYLOAD'] = uart_response[1:]
+    return uart_response_formatted
 
 
 def w_tx_payload(payload):
