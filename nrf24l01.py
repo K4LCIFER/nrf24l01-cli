@@ -295,51 +295,34 @@ def r_register(register_name):
 
 
 def w_register(register_name, payload):
-    # NOTE: Might change this stuff.
-    if type(payload) == list:
-        if len(payload) != REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES']:
-            raise ValueError("Incorrect payload length!")
-    if type(payload) == int:
-        if payload > 255:
-            raise ValueError("")
+    # NOTE: I don't think that this is necessary.
+    # # Ensure that the correct number of bytes are present in the payload.
+    # if len(payload) != REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES']:
+        # raise ValueError("Incorrect payload length!")
+    command_byte = (
+        COMMANDS['W_REGISTER'] | REGISTER_MAP[register_name]['ADDRESS']
+    ).to_bytes(1, 'big')
+    # UART data:
+    # 1 command byte + number of payload bytes
+    command_length = len(command_byte)  + len(payload)
+    # [(tx) 1 command byte | 1 status byte (rx)] + (tx) payload bytes
+    transfer_length = 1 + len(payload)
+    response_length = 1 # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        # Send header bytes:
-        # Transmit data length - Command Byte + the number of Data Bytes.
-        ser.write(
-            (REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES'] + 1).to_bytes(
-                1, 'big'
-            )
-        )
-        # NOTE: I don't like "Returned data length". It isn't overly descriptive
-        # of what it is/does. It should be more like number of transfer bytes,
-        # in reference to SPI, as it is for the spi; however it is also for the
-        # data returned to the UART sometimes. Some more thought is needed for
-        # this.
-        # Returned data length - Status Register + the number of Data Bytes.
-        ser.write(
-            (REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES'] + 1).to_bytes(
-                1, 'big'
-            )
-        )
-        # Send command byte:
-        ser.write(
-            (
-                COMMANDS['W_REGISTER'] | REGISTER_MAP[register_name]['ADDRESS']
-            ).to_bytes(1, 'big')
-        )
-        # Send the data bytes:
-        # TODO: Allow this statement to handle multiple types.
-        if isinstance(payload, list):
-            for byte in payload:
-                ser.write(byte.to_bytes(1, 'big'))
-        elif isinstance(payload, int):
-            ser.write(payload.to_bytes(1, 'big'))
-        # Read and return the status register.
-        # TODO: Need to add the status register to the returned data dictionary.
-        uart_response = int.from_bytes(ser.read(1), 'big')
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(command_byte)
+        # Transmit the payload byte(s)
+        ser.write(payload)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
         uart_response_formatted = {}
         uart_response_formatted['RAW'] = uart_response
-        return uart_response_formatted
+        uart_response_formatted['STATUS'] = uart_response[:1]
+    return uart_response_formatted
 
 
 def r_rx_payload():
@@ -543,8 +526,8 @@ def nop():
 # display its bit mnemonics?
 # TODO fix the UART data docemuntatoin for the above functions so that it matchs
 # what's actually in the functions.
-# TODO: rewrite the code of the original functions to match the new functoins
-# i.e. only dealing with bytes and not ints or anything like that. Avoiding as
-# much superfluous processing as possible.
 # NOTE: Should the payload also accept other types such as int, or an array?
 # TODO: perform a check for if the specified register name exists.
+# NOTE: Perhaps it is better to leave the payload size up to the programmer.
+# This way it gives the programmer as much freedom as possible in deciding how
+# to control the nRF24L01.
