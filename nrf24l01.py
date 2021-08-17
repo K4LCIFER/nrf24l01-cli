@@ -425,8 +425,6 @@ def w_tx_payload(payload):
         # Transmit the command byte
         ser.write(COMMANDS['W_TX_PAYLOAD'].to_bytes(1, 'big'))
         # Transmit the payload
-        print(payload)
-        print(type(payload))
         ser.write(payload)
         # Read and return the UART response
         uart_response = ser.read(response_length)
@@ -437,7 +435,23 @@ def w_tx_payload(payload):
 
 
 def flush_tx():
-    return
+    # UART data:
+    command_length = 1  # 1 command byte
+    transfer_length = 1 # 1 command byte
+    response_length = 1 # 1 status byte
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(COMMANDS['FLUSH_TX'].to_bytes(1, 'big'))
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
+    return uart_response_formatted
 
 
 def fulsh_rx():
