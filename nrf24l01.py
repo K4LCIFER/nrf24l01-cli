@@ -513,11 +513,30 @@ def r_rx_pl_wid():
         uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
         uart_response_formatted['RX_PL_WID'] = uart_response[1].to_bytes(
                 1, 'big')
-    return
+    return uart_response_formatted
 
 
-def w_ack_payload(payload):
-    return
+def w_ack_payload(payload, pipe):
+    # UART data:
+    command_length = 33  # 1 command byte + 32 data bytes (payload)
+    transfer_length = 33 # 1 command byte + 32 data bytes (payload)
+    response_length = 1 # 1 status byte (could also be included in ^)
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        # The pipe is or'd with the command byte. See [1] Section 8.3.1 Table 19
+        ser.write((COMMANDS['W_ACK_PAYLOAD'] | pipe).to_bytes(1, 'big'))
+        # Transmit the payload
+        ser.write(payload)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
+    return uart_response_formatted
 
 
 def w_tx_payload_no_ack(payload):
@@ -530,3 +549,9 @@ def nop():
 
 # NOTE: Should I format the returned status key in the returned dictionary to
 # display its bit mnemonics?
+# TODO fix the UART data docemuntatoin for the above functions so that it matchs
+# what's actually in the functions.
+# TODO: rewrite the code of the original functions to match the new functoins
+# i.e. only dealing with bytes and not ints or anything like that. Avoiding as 
+# much superfluous processing as possible.
+# NOTE: Should the payload also accept other types such as int, or an array?
