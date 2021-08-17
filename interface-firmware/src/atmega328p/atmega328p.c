@@ -39,11 +39,11 @@
 
 
 // Buffer for the command received over UART.
-unsigned char received_command[32];
+unsigned char received_command[33];
 // Index to keep track of how many bytes have been received over UART.
 unsigned char received_command_index;
 // Buffer to store the data received from the nRF24L01 during an SPI transfer.
-unsigned char received_spi_data[32];
+unsigned char received_spi_data[33];
 // The expected length of a command to be received.
 unsigned char command_data_length = 0;
 // The requested number of response bytes to be received (and transmitted) over
