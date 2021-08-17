@@ -455,7 +455,23 @@ def flush_tx():
 
 
 def fulsh_rx():
-    return
+    # UART data:
+    command_length = 1  # 1 command byte
+    transfer_length = 1 # 1 command byte
+    response_length = 1 # 1 status byte
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(COMMANDS['FLUSH_RX'].to_bytes(1, 'big'))
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
+    return uart_response_formatted
 
 
 def reuse_tx_pl():
