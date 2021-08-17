@@ -225,116 +225,73 @@ def _extract_bit_value(data, number_of_bits, offset):
     return ((1 << number_of_bits) - 1) & (data >> offset)
 
 
-# Retrieve the contents of the status register of the nRF24L01, and return it as
-# a dictionary.
-def get_status():  # WARNING MUST REDO THIS. remove perhaps?
-    # TODO: Need to add the functionality to retrieve the FIFO_STATUS, as well.
-    with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        ser.write(bytes([COMMANDS['NOP']]))  # Send an empty packet
-        # Read the status register. (convert  bytes data type to int)
-        status = int.from_bytes(ser.read(1), byteorder='big', signed=False)
+# NOTE: This function is now deprecated in favor of r_register.
+# # Retrieve the contents of the status register of the nRF24L01, and return it as
+# # a dictionary.
+# def get_status():  # WARNING MUST REDO THIS. remove perhaps?
+# # TODO: Need to add the functionality to retrieve the FIFO_STATUS, as well.
+# with serial.Serial(PORT, BAUD, timeout=1) as ser:
+# ser.write(bytes([COMMANDS['NOP']]))  # Send an empty packet
+# # Read the status register. (convert  bytes data type to int)
+# status = int.from_bytes(ser.read(1), byteorder='big', signed=False)
 
-    # Separate each portion of the received status register data into its
-    # separate bit mnemonic sections.
-    status_register = {}
-    status_register['RAW'] = status  # Raw received data
-    status_register['RX_DR'] = _extract_bit_value(
-        status,
-        REGISTER_MAP['STATUS']['RX_DR']['LENGTH'],
-        REGISTER_MAP['STATUS']['RX_DR']['OFFSET'],
-    )
-    status_register['TX_DS'] = _extract_bit_value(
-        status,
-        REGISTER_MAP['STATUS']['TX_DS']['LENGTH'],
-        REGISTER_MAP['STATUS']['TX_DS']['OFFSET'],
-    )
-    status_register['MAX_RT'] = _extract_bit_value(
-        status,
-        REGISTER_MAP['STATUS']['MAX_RT']['LENGTH'],
-        REGISTER_MAP['STATUS']['MAX_RT']['OFFSET'],
-    )
-    status_register['RX_P_NO'] = _extract_bit_value(
-        status,
-        REGISTER_MAP['STATUS']['RX_P_NO']['LENGTH'],
-        REGISTER_MAP['STATUS']['RX_P_NO']['OFFSET'],
-    )
-    status_register['TX_FULL'] = _extract_bit_value(
-        status,
-        REGISTER_MAP['STATUS']['TX_FULL']['LENGTH'],
-        REGISTER_MAP['STATUS']['TX_FULL']['OFFSET'],
-    )
+# # Separate each portion of the received status register data into its
+# # separate bit mnemonic sections.
+# status_register = {}
+# status_register['RAW'] = status  # Raw received data
+# status_register['RX_DR'] = _extract_bit_value(
+# status,
+# REGISTER_MAP['STATUS']['RX_DR']['LENGTH'],
+# REGISTER_MAP['STATUS']['RX_DR']['OFFSET'],
+# )
+# status_register['TX_DS'] = _extract_bit_value(
+# status,
+# REGISTER_MAP['STATUS']['TX_DS']['LENGTH'],
+# REGISTER_MAP['STATUS']['TX_DS']['OFFSET'],
+# )
+# status_register['MAX_RT'] = _extract_bit_value(
+# status,
+# REGISTER_MAP['STATUS']['MAX_RT']['LENGTH'],
+# REGISTER_MAP['STATUS']['MAX_RT']['OFFSET'],
+# )
+# status_register['RX_P_NO'] = _extract_bit_value(
+# status,
+# REGISTER_MAP['STATUS']['RX_P_NO']['LENGTH'],
+# REGISTER_MAP['STATUS']['RX_P_NO']['OFFSET'],
+# )
+# status_register['TX_FULL'] = _extract_bit_value(
+# status,
+# REGISTER_MAP['STATUS']['TX_FULL']['LENGTH'],
+# REGISTER_MAP['STATUS']['TX_FULL']['OFFSET'],
+# )
 
-    return status_register
+# return status_register
 
 
 def r_register(register_name):
+    # UART data:
+    command_length = 1  # 1 command byte + 32 data bytes (payload)
+    # (tx) 1 command byte + (rx) the number of bytes at the address.
+    transfer_length = 1 + REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES']
+    # 1 status byte + the number of bytes at the address
+    response_length = 1 + REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES']
+    command_byte = (
+        COMMANDS['R_REGISTER'] | REGISTER_MAP[register_name]['ADDRESS']
+    )
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        # Send two header bytes:
-        # This first byte is always 0x01 for the read command as the command
-        # word and address are only 1 byte.
-        ser.write(b'\x01')  # Length of the transmitted command.
-        # TODO: Add some logic to check if the requested override is longer than
-        # the maximum data bytes at the address. (Also less than 32).
-        # Specify the length of the requested data associated with the
-        # command word + 1 for the status register.
-        ser.write(
-            (REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES'] + 1).to_bytes(
-                1, 'big'
-            )
-        )
-        # Transmit the command byte.
-        ser.write(
-            (
-                COMMANDS['R_REGISTER'] | REGISTER_MAP[register_name]['ADDRESS']
-            ).to_bytes(1, 'big')
-        )
-        # Read the UART response.
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(command_byte.to_bytes(1, 'big'))
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
         uart_response_formatted = {}
-        # Read the data returned over UART.
-        uart_response = int.from_bytes(
-            ser.read(
-                REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES'] + 1,
-            ),
-            'big',
-        )
-        # Save an entry for the raw returned data.
         uart_response_formatted['RAW'] = uart_response
-        # TODO: Add the returned status register to the returned dictionary.
-        # There is an issue where with the STATUS register is included in the
-        # final data, so it must be removed.
-        # The following is a special case of the registers in the nRF24L01. If
-        # a register has only one byte associated with it, then it will always
-        # have bit mnemonics describing the bits that are at the specified
-        # register adderss; however, if the register containts more than one
-        # byte, then it does not have any bit mnemonics describing the bit
-        # positions of the register, and instead has whole chunks of data.
-        if REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES'] == 1:
-            # First collect the bit mnemonic(s) into a dictionary and assign
-            # each of them their respecive returned value.
-            uart_response_bit_mnemonics = {}
-            for bit_mnemonic in REGISTER_MAP[register_name]:
-                # Ignore the ADDRESS and NUMBER_OF_DATA_BYTES keys.
-                if (
-                    bit_mnemonic != 'ADDRESS'
-                    and bit_mnemonic != 'NUMBER_OF_DATA_BYTES'
-                ):
-                    # Extract the respective bit menmonics bit value from the
-                    # raw received data and write it to the dictionary.
-                    uart_response_bit_mnemonics[
-                        bit_mnemonic
-                    ] = _extract_bit_value(
-                        uart_response,
-                        REGISTER_MAP[register_name][bit_mnemonic]['LENGTH'],
-                        REGISTER_MAP[register_name][bit_mnemonic]['OFFSET'],
-                    )
-                    # Add the bit_mnemonics to the main UART dictionary.
-                    uart_response_formatted[
-                        register_name
-                    ] = uart_response_bit_mnemonics
-        elif REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES'] > 1:
-            # Dump the total received data into the dictionary.
-            uart_response_formatted[register_name] = uart_response
-        return uart_response_formatted
+        uart_response_formatted['STATUS'] = uart_response[:1]
+        uart_response_formatted[register_name] = uart_response[1:]
+    return uart_response_formatted
 
 
 def w_register(register_name, payload):
@@ -590,3 +547,4 @@ def nop():
 # i.e. only dealing with bytes and not ints or anything like that. Avoiding as
 # much superfluous processing as possible.
 # NOTE: Should the payload also accept other types such as int, or an array?
+# TODO: perform a check for if the specified register name exists.
