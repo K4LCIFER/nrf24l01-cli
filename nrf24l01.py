@@ -539,8 +539,26 @@ def w_ack_payload(payload, pipe):
     return uart_response_formatted
 
 
-def w_tx_payload_no_ack(payload):
-    return
+def w_tx_payload_noack(payload):
+    # UART data:
+    command_length = 33  # 1 command byte + 32 data bytes (payload)
+    transfer_length = 33 # 1 command byte + 32 data bytes (payload)
+    response_length = 1 # 1 status byte (could also be included in ^)
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write((COMMANDS['W_TX_PAYLOAD_NOACK']).to_bytes(1, 'big'))
+        # Transmit the payload
+        ser.write(payload)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
+    return uart_response_formatted
 
 
 def nop():
