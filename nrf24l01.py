@@ -414,9 +414,9 @@ def w_tx_payload(payload):
     if len(payload) != 32:
         raise ValueError("Incorrect payload length! Payload length must be 32.")
     # UART data
-    command_length = 33 # 1 Command byte + 32 data bytes
-    transfer_length = 33    # 1 Status byte + 32 data_bytes
-    response_length = 1 # 1 Status byte
+    command_length = 33  # 1 Command byte + 32 data bytes
+    transfer_length = 33  # 1 Status byte + 32 data_bytes
+    response_length = 1  # 1 Status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART Command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -437,8 +437,8 @@ def w_tx_payload(payload):
 def flush_tx():
     # UART data:
     command_length = 1  # 1 command byte
-    transfer_length = 1 # 1 command byte
-    response_length = 1 # 1 status byte
+    transfer_length = 1  # 1 command byte
+    response_length = 1  # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -457,8 +457,8 @@ def flush_tx():
 def fulsh_rx():
     # UART data:
     command_length = 1  # 1 command byte
-    transfer_length = 1 # 1 command byte
-    response_length = 1 # 1 status byte
+    transfer_length = 1  # 1 command byte
+    response_length = 1  # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -477,8 +477,8 @@ def fulsh_rx():
 def reuse_tx_pl():
     # UART data:
     command_length = 1  # 1 command byte
-    transfer_length = 1 # 1 command byte
-    response_length = 1 # 1 status byte
+    transfer_length = 1  # 1 command byte
+    response_length = 1  # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -497,8 +497,8 @@ def reuse_tx_pl():
 def r_rx_pl_wid():
     # UART data:
     command_length = 1  # 1 command byte
-    transfer_length = 2 # 1 command byte
-    response_length = 2 # 1 status byte
+    transfer_length = 2  # 1 command byte
+    response_length = 2  # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -512,15 +512,16 @@ def r_rx_pl_wid():
         uart_response_formatted['RAW'] = uart_response
         uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
         uart_response_formatted['RX_PL_WID'] = uart_response[1].to_bytes(
-                1, 'big')
+            1, 'big'
+        )
     return uart_response_formatted
 
 
 def w_ack_payload(payload, pipe):
     # UART data:
     command_length = 33  # 1 command byte + 32 data bytes (payload)
-    transfer_length = 33 # 1 command byte + 32 data bytes (payload)
-    response_length = 1 # 1 status byte (could also be included in ^)
+    transfer_length = 33  # 1 command byte + 32 data bytes (payload)
+    response_length = 1  # 1 status byte (could also be included in ^)
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -542,8 +543,8 @@ def w_ack_payload(payload, pipe):
 def w_tx_payload_noack(payload):
     # UART data:
     command_length = 33  # 1 command byte + 32 data bytes (payload)
-    transfer_length = 33 # 1 command byte + 32 data bytes (payload)
-    response_length = 1 # 1 status byte (could also be included in ^)
+    transfer_length = 33  # 1 command byte + 32 data bytes (payload)
+    response_length = 1  # 1 status byte (could also be included in ^)
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -564,8 +565,8 @@ def w_tx_payload_noack(payload):
 def nop():
     # UART data:
     command_length = 1  # 1 command byte
-    transfer_length = 1 # 1 command byte (+1 status byte?)
-    response_length = 1 # 1 status byte
+    transfer_length = 1  # 1 command byte (+1 status byte?)
+    response_length = 1  # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -586,6 +587,6 @@ def nop():
 # TODO fix the UART data docemuntatoin for the above functions so that it matchs
 # what's actually in the functions.
 # TODO: rewrite the code of the original functions to match the new functoins
-# i.e. only dealing with bytes and not ints or anything like that. Avoiding as 
+# i.e. only dealing with bytes and not ints or anything like that. Avoiding as
 # much superfluous processing as possible.
 # NOTE: Should the payload also accept other types such as int, or an array?
