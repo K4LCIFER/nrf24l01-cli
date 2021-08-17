@@ -409,7 +409,31 @@ def r_rx_payload():
 
 
 def w_tx_payload(payload):
-    return
+    if type(payload) != bytes:
+        raise TypeError("Payload must be of type <bytes>.")
+    if len(payload) != 32:
+        raise ValueError("Incorrect payload length! Payload length must be 32.")
+    # UART data
+    command_length = 33 # 1 Command byte + 32 data bytes
+    transfer_length = 33    # 1 Status byte + 32 data_bytes
+    response_length = 1 # 1 Status byte
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART Command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(COMMANDS['W_TX_PAYLOAD'].to_bytes(1, 'big'))
+        # Transmit the payload
+        print(payload)
+        print(type(payload))
+        ser.write(payload)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
+    return uart_response_formatted
 
 
 def flush_tx():
