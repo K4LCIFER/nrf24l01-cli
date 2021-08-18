@@ -16,10 +16,6 @@
 #
 #    For more information, see https://github.com/K4LCIFER/nrf24l01-debugger
 ################################################################################
-# This file was adapted from
-# [this](https://github.com/maniacbug/RF24/blob/master/nRF24L01.h) header file.
-# 2021-08-11
-################################################################################
 # 1. [nRF24L01 Datasheet](<project_directory>/nRF24L01-datasheet.pdf)
 ################################################################################
 
@@ -39,10 +35,7 @@ else:
 # error to say that the device was not found.
 
 
-# Command names and words. See [1]Section 8.3.1 Table 19.
-# NOTE: I am not sure if it is correct to vertically align these in this
-# scenario. According to PEP8, it seems to be incorrect. Further research is
-# required.
+# Command names and words. See [1] Section 8.3.1 Table 19.
 COMMANDS = {
     'R_REGISTER': 0x00,
     'W_REGISTER': 0x20,
@@ -59,7 +52,7 @@ COMMANDS = {
 
 
 # Register mnemonics and addresses with their bit mnemonics and bit positions.
-# See [1]Section 9.1 Table 27.
+# See [1] Section 9.1 Table 27.
 REGISTER_MAP = {
     'CONFIG': {
         'ADDRESS': 0x00,
@@ -225,71 +218,46 @@ def _extract_bit_value(data, number_of_bits, offset):
     return ((1 << number_of_bits) - 1) & (data >> offset)
 
 
-# NOTE: This function is now deprecated in favor of r_register.
-# # Retrieve the contents of the status register of the nRF24L01, and return it as
-# # a dictionary.
-# def get_status():  # WARNING MUST REDO THIS. remove perhaps?
-# # TODO: Need to add the functionality to retrieve the FIFO_STATUS, as well.
-# with serial.Serial(PORT, BAUD, timeout=1) as ser:
-# ser.write(bytes([COMMANDS['NOP']]))  # Send an empty packet
-# # Read the status register. (convert  bytes data type to int)
-# status = int.from_bytes(ser.read(1), byteorder='big', signed=False)
-
-# # Separate each portion of the received status register data into its
-# # separate bit mnemonic sections.
-# status_register = {}
-# status_register['RAW'] = status  # Raw received data
-# status_register['RX_DR'] = _extract_bit_value(
-# status,
-# REGISTER_MAP['STATUS']['RX_DR']['LENGTH'],
-# REGISTER_MAP['STATUS']['RX_DR']['OFFSET'],
-# )
-# status_register['TX_DS'] = _extract_bit_value(
-# status,
-# REGISTER_MAP['STATUS']['TX_DS']['LENGTH'],
-# REGISTER_MAP['STATUS']['TX_DS']['OFFSET'],
-# )
-# status_register['MAX_RT'] = _extract_bit_value(
-# status,
-# REGISTER_MAP['STATUS']['MAX_RT']['LENGTH'],
-# REGISTER_MAP['STATUS']['MAX_RT']['OFFSET'],
-# )
-# status_register['RX_P_NO'] = _extract_bit_value(
-# status,
-# REGISTER_MAP['STATUS']['RX_P_NO']['LENGTH'],
-# REGISTER_MAP['STATUS']['RX_P_NO']['OFFSET'],
-# )
-# status_register['TX_FULL'] = _extract_bit_value(
-# status,
-# REGISTER_MAP['STATUS']['TX_FULL']['LENGTH'],
-# REGISTER_MAP['STATUS']['TX_FULL']['OFFSET'],
-# )
-
-# return status_register
+def _format_byte_from_register(byte_to_format, reference_register):
+    formatted_byte = {}
+    for bit_mnemonic in REGISTER_MAP[reference_register]:
+        if bit_mnemonic != 'ADDRESS' and bit_mnemonic != 'NUMBER_OF_DATA_BYTES':
+            formatted_byte[bit_mnemonic] = _extract_bit_value(
+                int.from_bytes(byte_to_format, 'big'),
+                REGISTER_MAP[reference_register][bit_mnemonic]['LENGTH'],
+                REGISTER_MAP[reference_register][bit_mnemonic]['OFFSET'],
+            )
+    return formatted_byte
 
 
 def r_register(register_name):
-    # UART data:
-    command_length = 1  # 1 command byte + 32 data bytes (payload)
-    # (tx) 1 command byte + (rx) the number of bytes at the address.
+    command_byte = (
+        COMMANDS['R_REGISTER'] | REGISTER_MAP[register_name]['ADDRESS']
+    ).to_bytes(1, 'big')
+    command_length = len(command_byte)  # 1 command byte
+    # [(tx) 1 command byte | (rx) 1 status byte] + (rx) the number of bytes at
+    # the address.
     transfer_length = 1 + REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES']
     # 1 status byte + the number of bytes at the address
     response_length = 1 + REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES']
-    command_byte = (
-        COMMANDS['R_REGISTER'] | REGISTER_MAP[register_name]['ADDRESS']
-    )
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
         # Transmit the SPI transfer length header
         ser.write(transfer_length.to_bytes(1, 'big'))
         # Transmit the command byte
-        ser.write(command_byte.to_bytes(1, 'big'))
+        ser.write(command_byte)
         # Read and return the UART response
         uart_response = ser.read(response_length)
         uart_response_formatted = {}
         uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[:1]
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
         uart_response_formatted[register_name] = uart_response[1:]
     return uart_response_formatted
 
@@ -298,16 +266,15 @@ def w_register(register_name, payload):
     # NOTE: I don't think that this is necessary.
     # # Ensure that the correct number of bytes are present in the payload.
     # if len(payload) != REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES']:
-        # raise ValueError("Incorrect payload length!")
+    # raise ValueError("Incorrect payload length!")
     command_byte = (
         COMMANDS['W_REGISTER'] | REGISTER_MAP[register_name]['ADDRESS']
     ).to_bytes(1, 'big')
-    # UART data:
     # 1 command byte + number of payload bytes
-    command_length = len(command_byte)  + len(payload)
+    command_length = len(command_byte) + len(payload)
     # [(tx) 1 command byte | 1 status byte (rx)] + (tx) payload bytes
     transfer_length = 1 + len(payload)
-    response_length = 1 # 1 status byte
+    response_length = 1  # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -321,41 +288,56 @@ def w_register(register_name, payload):
         uart_response = ser.read(response_length)
         uart_response_formatted = {}
         uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[:1]
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
     return uart_response_formatted
 
 
 def r_rx_payload():
-    payload_length = 33
+    command_byte = COMMANDS['R_RX_PAYLOAD'].to_bytes(1, 'big')
+    # The command byte + 32 RX_PAYLOAD bytes
+    command_length = len(command_byte) + 32
+    # [(tx) 1 command byte | 1 status byte (rx)] + 32 RX_PAYLOAD bytes
+    transfer_length = 33
+    response_length = 33  # 1 status byte + 32 RX_PAYLOAD bytes
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        # Transmit UART headers:
-        # Transmit UART Command length: One command word
-        ser.write((1).to_bytes(1, 'big'))
-        # Transmit SPI transfer length: 1 command byte + 32 data bytes
-        # See [1] Section 8.3.1 Table 19
-        ser.write((payload_length).to_bytes(1, 'big'))
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
         # Transmit the Command byte
-        ser.write(COMMANDS['R_RX_PAYLOAD'].to_bytes(1, 'big'))
-        # Read and return the Rx Payload, and the Status Register data.
-        # uart_response = int.from_bytes(ser.read(1), 'big')
-        uart_response = ser.read(payload_length)
+        ser.write(command_byte)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
         uart_response_formatted = {}
-        # NOTE: Should data be in bytes or int? bytes is probably more readable
-        # and useable than int for the raw data.
         uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
-        uart_response_formatted['PAYLOAD'] = uart_response[1:]
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
+        uart_response_formatted['RX_PAYLOAD'] = uart_response[1:].strip(b'\x00')
     return uart_response_formatted
 
 
 def w_tx_payload(payload):
     if type(payload) != bytes:
         raise TypeError("Payload must be of type <bytes>.")
-    if len(payload) != 32:
-        raise ValueError("Incorrect payload length! Payload length must be 32.")
-    # UART data
-    command_length = 33  # 1 Command byte + 32 data bytes
-    transfer_length = 33  # 1 Status byte + 32 data_bytes
+    # NOTE: I think this is uneeded
+    # if len(payload) != 32:
+    # raise ValueError("Incorrect payload length! Payload length must be 32.")
+    command_byte = COMMANDS['W_TX_PAYLOAD'].to_bytes(1, 'big')
+    # 1 command byte + the number of payload bytes
+    command_length = len(command_byte) + len(payload)
+    # [(tx) 1 command byte | 1 status byte (rx)] + TX_PAYLOAD bytes
+    transfer_length = 1 + len(payload)
     response_length = 1  # 1 Status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART Command length header
@@ -363,105 +345,135 @@ def w_tx_payload(payload):
         # Transmit the SPI transfer length header
         ser.write(transfer_length.to_bytes(1, 'big'))
         # Transmit the command byte
-        ser.write(COMMANDS['W_TX_PAYLOAD'].to_bytes(1, 'big'))
+        ser.write(command_byte)
         # Transmit the payload
         ser.write(payload)
         # Read and return the UART response
         uart_response = ser.read(response_length)
         uart_response_formatted = {}
         uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
-    return uart_response_formatted
-
-
-def flush_tx():
-    # UART data:
-    command_length = 1  # 1 command byte
-    transfer_length = 1  # 1 command byte
-    response_length = 1  # 1 status byte
-    with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        # Transmit the UART command length header
-        ser.write(command_length.to_bytes(1, 'big'))
-        # Transmit the SPI transfer length header
-        ser.write(transfer_length.to_bytes(1, 'big'))
-        # Transmit the command byte
-        ser.write(COMMANDS['FLUSH_TX'].to_bytes(1, 'big'))
-        # Read and return the UART response
-        uart_response = ser.read(response_length)
-        uart_response_formatted = {}
-        uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
-    return uart_response_formatted
-
-
-def fulsh_rx():
-    # UART data:
-    command_length = 1  # 1 command byte
-    transfer_length = 1  # 1 command byte
-    response_length = 1  # 1 status byte
-    with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        # Transmit the UART command length header
-        ser.write(command_length.to_bytes(1, 'big'))
-        # Transmit the SPI transfer length header
-        ser.write(transfer_length.to_bytes(1, 'big'))
-        # Transmit the command byte
-        ser.write(COMMANDS['FLUSH_RX'].to_bytes(1, 'big'))
-        # Read and return the UART response
-        uart_response = ser.read(response_length)
-        uart_response_formatted = {}
-        uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
-    return uart_response_formatted
-
-
-def reuse_tx_pl():
-    # UART data:
-    command_length = 1  # 1 command byte
-    transfer_length = 1  # 1 command byte
-    response_length = 1  # 1 status byte
-    with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        # Transmit the UART command length header
-        ser.write(command_length.to_bytes(1, 'big'))
-        # Transmit the SPI transfer length header
-        ser.write(transfer_length.to_bytes(1, 'big'))
-        # Transmit the command byte
-        ser.write(COMMANDS['REUSE_TX_PL'].to_bytes(1, 'big'))
-        # Read and return the UART response
-        uart_response = ser.read(response_length)
-        uart_response_formatted = {}
-        uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
-    return uart_response_formatted
-
-
-def r_rx_pl_wid():
-    # UART data:
-    command_length = 1  # 1 command byte
-    transfer_length = 2  # 1 command byte
-    response_length = 2  # 1 status byte
-    with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        # Transmit the UART command length header
-        ser.write(command_length.to_bytes(1, 'big'))
-        # Transmit the SPI transfer length header
-        ser.write(transfer_length.to_bytes(1, 'big'))
-        # Transmit the command byte
-        ser.write(COMMANDS['R_RX_PL_WID'].to_bytes(1, 'big'))
-        # Read and return the UART response
-        uart_response = ser.read(response_length)
-        uart_response_formatted = {}
-        uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
-        uart_response_formatted['RX_PL_WID'] = uart_response[1].to_bytes(
-            1, 'big'
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
         )
     return uart_response_formatted
 
 
+def flush_tx():
+    command_byte = COMMANDS['FLUSH_TX'].to_bytes(1, 'big')
+    command_length = len(command_byte)  # 1 command byte
+    transfer_length = 1  # [(tx) 1 command byte | (rx) 1 status byte]
+    response_length = 1  # 1 status byte
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(command_byte)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
+    return uart_response_formatted
+
+
+def fulsh_rx():
+    command_byte = COMMANDS['FLUSH_RX'].to_bytes(1, 'big')
+    command_length = len(command_byte)  # 1 command byte
+    transfer_length = 1  # [(tx) 1 command byte | (rx) 1 status byte]
+    response_length = 1  # 1 status byte
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(command_byte)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
+    return uart_response_formatted
+
+
+def reuse_tx_pl():
+    command_byte = COMMANDS['REUSE_TX_PL'].to_bytes(1, 'big')
+    command_length = len(command_byte)  # 1 command byte
+    transfer_length = 1  # [(tx) 1 command byte | (rx) 1 status byte]
+    response_length = 1  # 1 status byte
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(command_byte)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
+    return uart_response_formatted
+
+
+def r_rx_pl_wid():
+    command_byte = COMMANDS['R_RX_PL_WID'].to_bytes(1, 'big')
+    command_length = len(command_byte)  # 1 command byte
+    transfer_length = 2  # [(tx) 1 command byte | (rx) 1 status byte]
+    response_length = 2  # 1 status byte + 1 RX_PL_WID byte
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(command_byte)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
+        uart_response_formatted['RX_PL_WID'] = uart_response[1:]
+    return uart_response_formatted
+
+
 def w_ack_payload(payload, pipe):
-    # UART data:
-    command_length = 33  # 1 command byte + 32 data bytes (payload)
-    transfer_length = 33  # 1 command byte + 32 data bytes (payload)
-    response_length = 1  # 1 status byte (could also be included in ^)
+    command_byte = (COMMANDS['W_ACK_PAYLOAD'] | pipe).to_bytes(1, 'big')
+    # 1 command byte + payload bytes
+    command_length = len(command_byte) + len(payload)
+    # [(tx) 1 command byte | (rx) 1 status byte] + payload bytes
+    transfer_length = 1 + len(payload)
+    response_length = 1  # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
         ser.write(command_length.to_bytes(1, 'big'))
@@ -469,43 +481,29 @@ def w_ack_payload(payload, pipe):
         ser.write(transfer_length.to_bytes(1, 'big'))
         # Transmit the command byte
         # The pipe is or'd with the command byte. See [1] Section 8.3.1 Table 19
-        ser.write((COMMANDS['W_ACK_PAYLOAD'] | pipe).to_bytes(1, 'big'))
+        ser.write(command_byte)
         # Transmit the payload
         ser.write(payload)
         # Read and return the UART response
         uart_response = ser.read(response_length)
         uart_response_formatted = {}
         uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
     return uart_response_formatted
 
 
 def w_tx_payload_noack(payload):
-    # UART data:
-    command_length = 33  # 1 command byte + 32 data bytes (payload)
-    transfer_length = 33  # 1 command byte + 32 data bytes (payload)
-    response_length = 1  # 1 status byte (could also be included in ^)
-    with serial.Serial(PORT, BAUD, timeout=1) as ser:
-        # Transmit the UART command length header
-        ser.write(command_length.to_bytes(1, 'big'))
-        # Transmit the SPI transfer length header
-        ser.write(transfer_length.to_bytes(1, 'big'))
-        # Transmit the command byte
-        ser.write((COMMANDS['W_TX_PAYLOAD_NOACK']).to_bytes(1, 'big'))
-        # Transmit the payload
-        ser.write(payload)
-        # Read and return the UART response
-        uart_response = ser.read(response_length)
-        uart_response_formatted = {}
-        uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
-    return uart_response_formatted
-
-
-def nop():
-    # UART data:
-    command_length = 1  # 1 command byte
-    transfer_length = 1  # 1 command byte (+1 status byte?)
+    command_byte = COMMANDS['W_TX_PAYLOAD_NOACK'].to_bytes(1, 'big')
+    # 1 command byte + payload bytes
+    command_length = len(command_byte) + len(payload)
+    # [(tx) 1 command byte | (rx) 1 status byte] + (tx) payload bytes
+    transfer_length = 1 + len(payload)
     response_length = 1  # 1 status byte
     with serial.Serial(PORT, BAUD, timeout=1) as ser:
         # Transmit the UART command length header
@@ -513,21 +511,53 @@ def nop():
         # Transmit the SPI transfer length header
         ser.write(transfer_length.to_bytes(1, 'big'))
         # Transmit the command byte
-        ser.write((COMMANDS['NOP']).to_bytes(1, 'big'))
+        ser.write(command_byte)
+        # Transmit the payload
+        ser.write(payload)
         # Read and return the UART response
         uart_response = ser.read(response_length)
         uart_response_formatted = {}
         uart_response_formatted['RAW'] = uart_response
-        uart_response_formatted['STATUS'] = uart_response[0].to_bytes(1, 'big')
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
+    return uart_response_formatted
+
+
+def nop():
+    command_byte = COMMANDS['NOP'].to_bytes(1, 'big')
+    command_length = len(command_byte)  # 1 command byte
+    transfer_length = 1  # [(tx) 1 command byte | (rx) 1 status byte]
+    response_length = 1  # 1 status byte
+    with serial.Serial(PORT, BAUD, timeout=1) as ser:
+        # Transmit the UART command length header
+        ser.write(command_length.to_bytes(1, 'big'))
+        # Transmit the SPI transfer length header
+        ser.write(transfer_length.to_bytes(1, 'big'))
+        # Transmit the command byte
+        ser.write(command_byte)
+        # Read and return the UART response
+        uart_response = ser.read(response_length)
+        uart_response_formatted = {}
+        uart_response_formatted['RAW'] = uart_response
+        uart_response_formatted['STATUS'] = {}
+        uart_response_formatted['STATUS']['RAW'] = uart_response[:1]
+        uart_response_formatted['STATUS'][
+            'FORMATTED'
+        ] = _format_byte_from_register(
+            uart_response_formatted['STATUS']['RAW'], 'STATUS'
+        )
     return uart_response_formatted
 
 
 # NOTE: Should I format the returned status key in the returned dictionary to
 # display its bit mnemonics?
-# TODO fix the UART data docemuntatoin for the above functions so that it matchs
-# what's actually in the functions.
-# NOTE: Should the payload also accept other types such as int, or an array?
-# TODO: perform a check for if the specified register name exists.
-# NOTE: Perhaps it is better to leave the payload size up to the programmer.
-# This way it gives the programmer as much freedom as possible in deciding how
-# to control the nRF24L01.
+# TODO: Add a check to make sure that the data given to the functions are of
+# type <bytes>
+# NOTE: Should all of these functions be part of a class?
+# NOTE: Maybe remove the raw data values from the dictionaries. I dont see much
+# use or their existence.
