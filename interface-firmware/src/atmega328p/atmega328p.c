@@ -78,6 +78,9 @@ int main()
     usart_init();
     spi_init();
     sei();  // Global interrupt enable.
+    // TODO: Instead of going into a loop when waiting for commands, the MCU
+    // should instead go into power down mode, and wait for interrupts, as an
+    // optimization.
     while (1);
 
     return 0;
