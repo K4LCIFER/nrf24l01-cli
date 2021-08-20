@@ -250,7 +250,13 @@ def _extract_bit_value(data, number_of_bits, offset):
 def _format_byte_from_register(byte_to_format, reference_register):
     formatted_byte = {}
     for bit_mnemonic in REGISTER_MAP[reference_register]:
-        if bit_mnemonic != 'ADDRESS' and bit_mnemonic != 'NUMBER_OF_DATA_BYTES':
+        # NOTE: Should probably think of a way to change this if statement.
+        # I don't like it, as it isn't overly modular or expandable.
+        if (
+            bit_mnemonic != 'ADDRESS'
+            and bit_mnemonic != 'NUMBER_OF_DATA_BYTES'
+            and bit_mnemonic != 'RESET_VALUE'
+        ):
             formatted_byte[bit_mnemonic] = _extract_bit_value(
                 int.from_bytes(byte_to_format, 'big'),
                 REGISTER_MAP[reference_register][bit_mnemonic]['LENGTH'],
