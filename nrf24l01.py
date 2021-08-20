@@ -57,159 +57,188 @@ REGISTER_MAP = {
     'CONFIG': {
         'ADDRESS': 0x00,
         'NUMBER_OF_DATA_BYTES': 1,
-        'MASK_RX_DR': {'LENGTH': 1, 'OFFSET': 6},
-        'MASK_TX_DS': {'LENGTH': 1, 'OFFSET': 5},
-        'MASK_MAX_RT': {'LENGTH': 1, 'OFFSET': 4},
-        'EN_CRC': {'LENGTH': 1, 'OFFSET': 3},
-        'CRCO': {'LENGTH': 1, 'OFFSET': 2},
-        'PWR_UP': {'LENGTH': 1, 'OFFSET': 1},
-        'PRIM_RX': {'LENGTH': 1, 'OFFSET': 0},
+        'RESET_VALUE': 0x08,
+        'MASK_RX_DR': {'LENGTH': 1, 'OFFSET': 6, 'RESET_VALUE': 0x00},
+        'MASK_TX_DS': {'LENGTH': 1, 'OFFSET': 5, 'RESET_VALUE': 0x00},
+        'MASK_MAX_RT': {'LENGTH': 1, 'OFFSET': 4, 'RESET_VALUE': 0x00},
+        'EN_CRC': {'LENGTH': 1, 'OFFSET': 3, 'RESET_VALUE': 0x00},
+        'CRCO': {'LENGTH': 1, 'OFFSET': 2, 'RESET_VALUE': 0x01},
+        'PWR_UP': {'LENGTH': 1, 'OFFSET': 1, 'RESET_VALUE': 0x00},
+        'PRIM_RX': {'LENGTH': 1, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'EN_AA': {
         'ADDRESS': 0x01,
         'NUMBER_OF_DATA_BYTES': 1,
-        'ENAA_P5': {'LENGTH': 1, 'OFFSET': 5},
-        'ENAA_P4': {'LENGTH': 1, 'OFFSET': 4},
-        'ENAA_P3': {'LENGTH': 1, 'OFFSET': 3},
-        'ENAA_P2': {'LENGTH': 1, 'OFFSET': 2},
-        'ENAA_P1': {'LENGTH': 1, 'OFFSET': 1},
-        'ENAA_P0': {'LENGTH': 1, 'OFFSET': 0},
+        'RESET_VALUE': 0x3F,
+        'ENAA_P5': {'LENGTH': 1, 'OFFSET': 5, 'RESET_VALUE': 0x01},
+        'ENAA_P4': {'LENGTH': 1, 'OFFSET': 4, 'RESET_VALUE': 0x01},
+        'ENAA_P3': {'LENGTH': 1, 'OFFSET': 3, 'RESET_VALUE': 0x01},
+        'ENAA_P2': {'LENGTH': 1, 'OFFSET': 2, 'RESET_VALUE': 0x01},
+        'ENAA_P1': {'LENGTH': 1, 'OFFSET': 1, 'RESET_VALUE': 0x01},
+        'ENAA_P0': {'LENGTH': 1, 'OFFSET': 0, 'RESET_VALUE': 0x01},
     },
     'EN_RXADDR': {
         'ADDRESS': 0x02,
         'NUMBER_OF_DATA_BYTES': 1,
-        'ERX_P5': {'LENGTH': 1, 'OFFSET': 5},
-        'ERX_P4': {'LENGTH': 1, 'OFFSET': 4},
-        'ERX_P3': {'LENGTH': 1, 'OFFSET': 3},
-        'ERX_P2': {'LENGTH': 1, 'OFFSET': 2},
-        'ERX_P1': {'LENGTH': 1, 'OFFSET': 1},
-        'ERX_P0': {'LENGTH': 1, 'OFFSET': 0},
+        'RESET_VALUE': 0x02,
+        'ERX_P5': {'LENGTH': 1, 'OFFSET': 5, 'RESET_VALUE': 0x00},
+        'ERX_P4': {'LENGTH': 1, 'OFFSET': 4, 'RESET_VALUE': 0x00},
+        'ERX_P3': {'LENGTH': 1, 'OFFSET': 3, 'RESET_VALUE': 0x00},
+        'ERX_P2': {'LENGTH': 1, 'OFFSET': 2, 'RESET_VALUE': 0x00},
+        'ERX_P1': {'LENGTH': 1, 'OFFSET': 1, 'RESET_VALUE': 0x01},
+        'ERX_P0': {'LENGTH': 1, 'OFFSET': 0, 'RESET_VALUE': 0x01},
     },
     'SETUP_AW': {
         'ADDRESS': 0x03,
         'NUMBER_OF_DATA_BYTES': 1,
-        'AW': {'LENGTH': 2, 'OFFSET': 0},
+        'RESET_VALUE': 0x03,
+        'AW': {'LENGTH': 2, 'OFFSET': 0, 'RESET_VALUE': 0x03},
     },
     'SETUP_RETR': {
         'ADDRESS': 0x04,
         'NUMBER_OF_DATA_BYTES': 1,
-        'ARD': {'LENGTH': 4, 'OFFSET': 4},
-        'ARC': {'LENGTH': 4, 'OFFSET': 0},
+        'RESET_VALUE': 0x03,
+        'ARD': {'LENGTH': 4, 'OFFSET': 4, 'RESET_VALUE': 0x00},
+        'ARC': {'LENGTH': 4, 'OFFSET': 0, 'RESET_VALUE': 0x03},
     },
     'RF_CH': {
         'ADDRESS': 0x05,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RF_CH': {'LENGTH': 7, 'OFFSET': 0},
+        'RESET_VALUE': 0x02,
+        'RF_CH': {'LENGTH': 7, 'OFFSET': 0, 'RESET_VALUE': 0x02},
     },
     'RF_SETUP': {
         'ADDRESS': 0x06,
         'NUMBER_OF_DATA_BYTES': 1,
-        'CONT_WAVE': {'LENGTH': 1, 'OFFSET': 7},
-        'RF_DR_LOW': {'LENGTH': 1, 'OFFSET': 5},
-        'PLL_LOCK': {'LENGTH': 1, 'OFFSET': 4},
-        'RF_DR_HIGH': {'LENGTH': 1, 'OFFSET': 3},
-        'RF_PWR': {'LENGTH': 2, 'OFFSET': 1},
+        'RESET_VALUE': 0x0E,
+        'CONT_WAVE': {'LENGTH': 1, 'OFFSET': 7, 'RESET_VALUE': 0x00},
+        'RF_DR_LOW': {'LENGTH': 1, 'OFFSET': 5, 'RESET_VALUE': 0x00},
+        'PLL_LOCK': {'LENGTH': 1, 'OFFSET': 4, 'RESET_VALUE': 0x00},
+        'RF_DR_HIGH': {'LENGTH': 1, 'OFFSET': 3, 'RESET_VALUE': 0x01},
+        'RF_PWR': {'LENGTH': 2, 'OFFSET': 1, 'RESET_VALUE': 0x03},
     },
     'STATUS': {
         'ADDRESS': 0x07,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RX_DR': {'LENGTH': 1, 'OFFSET': 6},
-        'TX_DS': {'LENGTH': 1, 'OFFSET': 5},
-        'MAX_RT': {'LENGTH': 1, 'OFFSET': 4},
-        'RX_P_NO': {'LENGTH': 3, 'OFFSET': 1},
-        'TX_FULL': {'LENGTH': 1, 'OFFSET': 0},
+        'RESET_VALUE': 0x0E,
+        'RX_DR': {'LENGTH': 1, 'OFFSET': 6, 'RESET_VALUE': 0x00},
+        'TX_DS': {'LENGTH': 1, 'OFFSET': 5, 'RESET_VALUE': 0x00},
+        'MAX_RT': {'LENGTH': 1, 'OFFSET': 4, 'RESET_VALUE': 0x00},
+        'RX_P_NO': {'LENGTH': 3, 'OFFSET': 1, 'RESET_VALUE': 0x07},
+        'TX_FULL': {'LENGTH': 1, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'OBSERVE_TX': {
-        'NUMBER_OF_DATA_BYTES': 1,
         'ADDRESS': 0x08,
-        'PLOS_CNT': {'LENGTH': 4, 'OFFSET': 4},
-        'ARC_CNT': {'LENGTH': 4, 'OFFSET': 0},
+        'NUMBER_OF_DATA_BYTES': 1,
+        'RESET_VALUE': 0x3F,
+        'PLOS_CNT': {'LENGTH': 4, 'OFFSET': 4, 'RESET_VALUE': 0x00},
+        'ARC_CNT': {'LENGTH': 4, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'RPD': {
         'ADDRESS': 0x09,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RPD': {'LENGTH': 1, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'RPD': {'LENGTH': 1, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },  # RPD or CD?
     'RX_ADDR_P0': {
         'ADDRESS': 0x0A,
         'NUMBER_OF_DATA_BYTES': 5,
+        'RESET_VALUE': 0xE7E7E7E7E7,
     },
     'RX_ADDR_P1': {
         'ADDRESS': 0x0B,
         'NUMBER_OF_DATA_BYTES': 5,
+        'RESET_VALUE': 0xC2C2C2C2C2,
     },
     'RX_ADDR_P2': {
         'ADDRESS': 0x0C,
         'NUMBER_OF_DATA_BYTES': 1,
+        'RESET_VALUE': 0xC3,
     },
     'RX_ADDR_P3': {
         'ADDRESS': 0x0D,
         'NUMBER_OF_DATA_BYTES': 1,
+        'RESET_VALUE': 0xC4,
     },
     'RX_ADDR_P4': {
         'ADDRESS': 0x0E,
         'NUMBER_OF_DATA_BYTES': 1,
+        'RESET_VALUE': 0xC5,
     },
     'RX_ADDR_P5': {
         'ADDRESS': 0x0F,
         'NUMBER_OF_DATA_BYTES': 1,
+        'RESET_VALUE': 0xC6,
     },
-    'TX_ADDR': {'ADDRESS': 0x10, 'NUMBER_OF_DATA_BYTES': 5},
+    'TX_ADDR': {
+        'ADDRESS': 0x10,
+        'NUMBER_OF_DATA_BYTES': 5,
+        'RESET_VALUE': 0xE7E7E7E7E7,
+    },
     'RX_PW_P0': {
         'ADDRESS': 0x11,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RX_PW_P0': {'LENGTH': 6, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'RX_PW_P0': {'LENGTH': 6, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'RX_PW_P1': {
         'ADDRESS': 0x12,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RX_PW_P1': {'LENGTH': 6, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'RX_PW_P1': {'LENGTH': 6, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'RX_PW_P2': {
         'ADDRESS': 0x13,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RX_PW_P2': {'LENGTH': 6, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'RX_PW_P2': {'LENGTH': 6, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'RX_PW_P3': {
         'ADDRESS': 0x14,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RX_PW_P3': {'LENGTH': 6, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'RX_PW_P3': {'LENGTH': 6, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'RX_PW_P4': {
         'ADDRESS': 0x15,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RX_PW_P4': {'LENGTH': 6, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'RX_PW_P4': {'LENGTH': 6, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'RX_PW_P5': {
         'ADDRESS': 0x16,
         'NUMBER_OF_DATA_BYTES': 1,
-        'RX_PW_P5': {'LENGTH': 6, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'RX_PW_P5': {'LENGTH': 6, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'FIFO_STATUS': {
         'ADDRESS': 0x17,
         'NUMBER_OF_DATA_BYTES': 1,
-        'TX_REUSE': {'LENGTH': 1, 'OFFSET': 6},
-        'TX_FULL': {'LENGTH': 1, 'OFFSET': 5},
-        'TX_EMPTY': {'LENGTH': 1, 'OFFSET': 4},
-        'RX_FULL': {'LENGTH': 1, 'OFFSET': 1},
-        'RX_EMPTY': {'LENGTH': 1, 'OFFSET': 0},
+        'RESET_VALUE': 0x11,
+        'TX_REUSE': {'LENGTH': 1, 'OFFSET': 6, 'RESET_VALUE': 0x00},
+        'TX_FULL': {'LENGTH': 1, 'OFFSET': 5, 'RESET_VALUE': 0x00},
+        'TX_EMPTY': {'LENGTH': 1, 'OFFSET': 4, 'RESET_VALUE': 0x01},
+        'RX_FULL': {'LENGTH': 1, 'OFFSET': 1, 'RESET_VALUE': 0x00},
+        'RX_EMPTY': {'LENGTH': 1, 'OFFSET': 0, 'RESET_VALUE': 0x01},
     },
     'DYNPD': {
         'ADDRESS': 0x1C,
         'NUMBER_OF_DATA_BYTES': 1,
-        'DPL_P5': {'LENGTH': 1, 'OFFSET': 5},
-        'DPL_P4': {'LENGTH': 1, 'OFFSET': 4},
-        'DPL_P3': {'LENGTH': 1, 'OFFSET': 3},
-        'DPL_P2': {'LENGTH': 1, 'OFFSET': 2},
-        'DPL_P1': {'LENGTH': 1, 'OFFSET': 1},
-        'DPL_P0': {'LENGTH': 1, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'DPL_P5': {'LENGTH': 1, 'OFFSET': 5, 'RESET_VALUE': 0x00},
+        'DPL_P4': {'LENGTH': 1, 'OFFSET': 4, 'RESET_VALUE': 0x00},
+        'DPL_P3': {'LENGTH': 1, 'OFFSET': 3, 'RESET_VALUE': 0x00},
+        'DPL_P2': {'LENGTH': 1, 'OFFSET': 2, 'RESET_VALUE': 0x00},
+        'DPL_P1': {'LENGTH': 1, 'OFFSET': 1, 'RESET_VALUE': 0x00},
+        'DPL_P0': {'LENGTH': 1, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
     'FEATURE': {
         'ADDRESS': 0x1D,
         'NUMBER_OF_DATA_BYTES': 1,
-        'EN_DPL': {'LENGTH': 1, 'OFFSET': 2},
-        'EN_ACK_PAY': {'LENGTH': 1, 'OFFSET': 1},
-        'EN_DYN_ACK': {'LENGTH': 1, 'OFFSET': 0},
+        'RESET_VALUE': 0x00,
+        'EN_DPL': {'LENGTH': 1, 'OFFSET': 2, 'RESET_VALUE': 0x00},
+        'EN_ACK_PAY': {'LENGTH': 1, 'OFFSET': 1, 'RESET_VALUE': 0x00},
+        'EN_DYN_ACK': {'LENGTH': 1, 'OFFSET': 0, 'RESET_VALUE': 0x00},
     },
 }
 
@@ -258,7 +287,20 @@ def r_register(register_name):
         ] = _format_byte_from_register(
             uart_response_formatted['STATUS']['RAW'], 'STATUS'
         )
-        uart_response_formatted[register_name] = uart_response[1:]
+        # Special case where if there is only one byte associated with the
+        # register, then there are multiple bit mnemonics within the byte;
+        # however, if there ard multiple bytes associated with the register,
+        # then there are no bit mnemonics.
+        if REGISTER_MAP[register_name]['NUMBER_OF_DATA_BYTES'] == 1:
+            uart_response_formatted[register_name] = {}
+            uart_response_formatted[register_name]['RAW'] = uart_response[:1]
+            uart_response_formatted[register_name][
+                'FORMATTED'
+            ] = _format_byte_from_register(
+                uart_response_formatted[register_name]['RAW'], register_name
+            )
+        else:
+            uart_response_formatted[register_name] = uart_response[1:]
     return uart_response_formatted
 
 
@@ -561,3 +603,8 @@ def nop():
 # NOTE: Should all of these functions be part of a class?
 # NOTE: Maybe remove the raw data values from the dictionaries. I dont see much
 # use or their existence.
+# TODO: Add a human readable alias to the register names
+# TODO: Add a reset value to each register.
+# NOTE: Should I add a NULL bit to represent the bits that have no use in the
+# register map? e.g. the obsolete, reserved, and read-only bits. I can't think
+# of a useful reason for its addition at this moment.
