@@ -34,7 +34,7 @@
 #include <avr/interrupt.h>
 
 
-#define USART_BUAD 9600
+#define USART_BUAD 9600 // TODO: Add the functionality to use this.
 #define USART_BAUD_PRESCALER 51
 
 
