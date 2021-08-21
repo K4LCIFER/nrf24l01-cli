@@ -436,7 +436,7 @@ def flush_tx():
     return uart_response_formatted
 
 
-def fulsh_rx():
+def flush_rx():
     command_byte = COMMANDS['FLUSH_RX'].to_bytes(1, 'big')
     command_length = len(command_byte)  # 1 command byte
     transfer_length = 1  # [(tx) 1 command byte | (rx) 1 status byte]
