@@ -233,11 +233,11 @@ REGISTER_MAP = {
 
 
 class nRF24L01:
-    def __init__(self, port):
+    def __init__(self, port: str):
         self.port = port
         self.BAUD = 9600
 
-    def r_register(self, register_name) -> bytes:
+    def r_register(self, register_name: str) -> bytes:
         """Read the command and status registers, and return their contents.
 
         Keyword arguments:
@@ -278,7 +278,7 @@ class nRF24L01:
             # Return, from the function, all data except the status
         return uart_response
 
-    def w_register(self, register_name, payload) -> None:
+    def w_register(self, register_name: str, payload: bytes) -> None:
         """Write data to a specified register
 
         Keyword arguments:
@@ -324,7 +324,7 @@ class nRF24L01:
             # Read any returned data. NOTE: Probably not needed as it returns 0
             ser.read(response_length)
 
-    def r_rx_payload(self, number_of_bytes) -> bytes:
+    def r_rx_payload(self, number_of_bytes: int) -> bytes:
         """Read, and return the received data from the RX_PLD regiser.
 
         Keyword arguments:
@@ -359,7 +359,7 @@ class nRF24L01:
             uart_response = ser.read(response_length)[1:]
         return uart_response
 
-    def w_tx_payload(self, payload) -> None:
+    def w_tx_payload(self, payload: bytes) -> None:
         """Write the data to be transmitted to the TX_PLD register
 
         Keyword arguments:
@@ -487,7 +487,7 @@ class nRF24L01:
             rx_pl_wid = int(uart_response)
         return rx_pl_wid
 
-    def w_ack_payload(self, payload, pipe) -> None:
+    def w_ack_payload(self, payload: bytes, pipe: int) -> None:
         # TODO: This command is nonfunctoinal at the momoent, and it requires
         # the logic for the pipe argument.
         """Write the payload to be transmitted together with the ACK packet.
@@ -529,7 +529,7 @@ class nRF24L01:
             # Read any returned data. NOTE: Probably not needed as it returns 0
             ser.read(response_length)
 
-    def w_tx_payload_noack(self, payload) -> None:
+    def w_tx_payload_noack(self, payload: bytes) -> None:
         """Transmit the payload data with AUTOACK disabled on this packet.
 
         Keyword arguments:
