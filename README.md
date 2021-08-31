@@ -1,1 +1,1 @@
-# nrf24l01-debugger
+# nrf24l01-cli
