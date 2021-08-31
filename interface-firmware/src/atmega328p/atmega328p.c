@@ -17,8 +17,9 @@
  *  For more information, see https://github.com/K4LCIFER/nrf24l01-debugger
  ******************************************************************************/
 /*******************************************************************************
+ * Documentation:
  * 1. [ATmega328p Datasheet]()
- * 2. [nRF24L01 Datasheet]()
+ * 2. [nRF24L01 Datasheet](<project_directory>/nRF24L01-datasheet.pdf)
  ******************************************************************************/
 /******************************************************************************/
 /*
@@ -29,7 +30,6 @@
  */
 #define __AVR_ATmega328P__
 /******************************************************************************/
-
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -46,9 +46,10 @@ unsigned char received_command_index;
 unsigned char received_spi_data[33];
 // The expected length of a command to be received.
 unsigned char command_data_length = 0;
-// The requested number of response bytes to be received (and transmitted) over
-// SPI.
+// The number of bytes to be sent back over UART.
 unsigned char response_data_length = 0;
+// The number of bytes to be transferred over SPI.
+unsigned char transfer_data_length = 0;
 
 
 /* Initialize the UART interface */
@@ -163,7 +164,7 @@ unsigned char* spi_transceive(unsigned char* transmit_data)
     // Send each segment of the command
     // NOTE: Some commands have a transaction length longer than the command
     // itself; tldr command_length <= response_data_length.
-    for (unsigned char i = 0; i < response_data_length; i++)
+    for (unsigned char i = 0; i < transfer_data_length; i++)
     {
             // Write the segment of data to the transmit buffer to initiate the
             // transmission.
@@ -184,32 +185,33 @@ unsigned char* spi_transceive(unsigned char* transmit_data)
 /* i.e. code to execute on the reception of data over UART */
 ISR (USART_RX_vect)
 {
-    // TODO: Need to add a way to handle the CE pin. The current plan is to add
-    // an nRF24L01 control byte to be sent in the UART transmission header.
-    // TODO: Need to add a trasnsmission timeout timer in case an issue occurs
-    // during transmission.
     // Save the data from the USART receive buffer.
     unsigned char received_usart_data = UDR0;
     // The `0b00111111` bit mask is to ensure that the length data bits in the
     // byte are the only bits which are being examined.
-    if (received_command_index == 0)    // Transmit data length header.
+    if (received_command_index == 0)    // Command data length header.
     {
         command_data_length = received_usart_data;// & 0b00111111;
         received_command_index++;
     }
-    else if (received_command_index == 1)   // Response data length header.
+    else if (received_command_index == 1)   // Transfer data length header.
     {
-        response_data_length = received_usart_data;// & 0b00111111;
+        transfer_data_length = received_usart_data;// & 0b00111111;
         received_command_index++;
     }
-    else if (received_command_index > 1)    // Command data.
+    else if (received_command_index == 2)   // Response data length header.
+    {
+        response_data_length = received_usart_data;
+        received_command_index++;
+    }
+    else if (received_command_index > 2)    // Command data.
     {
         // Save the received command segment.
-        received_command[received_command_index - 2] = received_usart_data;
+        received_command[received_command_index - 3] = received_usart_data;
         received_command_index++;
         // Check if the command has been fully received (Compare the number of
         // bytes received to the number of expected bytes).
-        if (received_command_index == (command_data_length + 2))
+        if (received_command_index == (command_data_length + 3))
         {
             // Send the command to the nRF24L01 and return its response over
             // UART.
@@ -218,3 +220,10 @@ ISR (USART_RX_vect)
         }
     }
 }
+
+    // TODO: (NOTE: I think this is actually obsolete now.)Need to add a way to
+    // handle the CE pin. The current plan is to add an nRF24L01 control byte
+    // to be sent in the UART transmission header.
+    // TODO: Add some form of timeout functionality in case a data transmission
+    // was interrupted. Perhaps use a watchdog timer to reset the mcu if a
+    // transmission is underway but is interrputed.
