@@ -309,7 +309,10 @@ class nRF24L01:
         command_length = len(command_byte) + len(payload)
         # [(tx) 1 command byte | 1 status byte (rx)] + (tx) payload bytes
         transfer_length = 1 + len(payload)
-        response_length = 0  # 1 status byte
+        # (TODO FIX THIS) NOTE: I have no idea what is going on with the
+        # response length. For some reason, It has to be a 1 otherwise
+        # everything breaks.
+        response_length = 1  # 1 status byte
         with serial.Serial(self.port, self.BAUD, timeout=1) as ser:
             # Transmit the UART command length header
             ser.write(command_length.to_bytes(1, 'big'))

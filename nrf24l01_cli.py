@@ -445,15 +445,15 @@ def config(args, nrf24l01):
         current_register_value = int.from_bytes(
             nrf24l01.r_register('CONFIG'), 'big'
         )
-        # Write a 0b1 to CONFIG:MASK_RX_DR to enable it
+        # Clear CONFIG:MASK_RX_DR to enable it
         if args.rx_dr_irq == 'enable':
-            new_register_value = current_register_value | (
+            new_register_value = current_register_value & ~(
                 1 << REGISTER_MAP['CONFIG']['MASK_RX_DR']['OFFSET']
             )
             nrf24l01.w_register('CONFIG', new_register_value.to_bytes(1, 'big'))
-        # Write a 0b0 to CONFIG:MASK_RX_DR to disable it
+        # Set CONFIG:MASK_RX_DR to disable it
         elif args.rx_dr_irq == 'disable':
-            new_register_value = current_register_value & ~(
+            new_register_value = current_register_value | (
                 1 << REGISTER_MAP['CONFIG']['MASK_RX_DR']['OFFSET']
             )
             nrf24l01.w_register('CONFIG', new_register_value.to_bytes(1, 'big'))
@@ -472,15 +472,15 @@ def config(args, nrf24l01):
         current_register_value = int.from_bytes(
             nrf24l01.r_register('CONFIG'), 'big'
         )
-        # Write a 0b1 to CONFIG:MASK_TX_DS to enable it
+        # Clear CONFIG:MASK_TX_DS to enable it
         if args.tx_ds_irq == 'enable':
-            new_register_value = current_register_value | (
+            new_register_value = current_register_value & ~(
                 1 << REGISTER_MAP['CONFIG']['MASK_TX_DS']['OFFSET']
             )
             nrf24l01.w_register('CONFIG', new_register_value.to_bytes(1, 'big'))
-        # Write a 0b0 to CONFIG:MASK_TX_DS to disable it
+        # Set CONFIG:MASK_TX_DS to disable it
         elif args.tx_ds_irq == 'disable':
-            new_register_value = current_register_value & ~(
+            new_register_value = current_register_value | (
                 1 << REGISTER_MAP['CONFIG']['MASK_TX_DS']['OFFSET']
             )
             nrf24l01.w_register('CONFIG', new_register_value.to_bytes(1, 'big'))
@@ -499,15 +499,15 @@ def config(args, nrf24l01):
         current_register_value = int.from_bytes(
             nrf24l01.r_register('CONFIG'), 'big'
         )
-        # Write a 0b1 to CONFIG:MASK_MAX_RT to enable it
+        # Clear CONFIG:MASK_MAX_RT to enable it
         if args.max_rt_irq == 'enable':
-            new_register_value = current_register_value | (
+            new_register_value = current_register_value & ~(
                 1 << REGISTER_MAP['CONFIG']['MASK_MAX_RT']['OFFSET']
             )
             nrf24l01.w_register('CONFIG', new_register_value.to_bytes(1, 'big'))
-        # Write a 0b0 to CONFIG:MASK_MAX_RT to disable it
+        # Set CONFIG:MASK_MAX_RT to disable it
         elif args.max_rt_irq == 'disable':
-            new_register_value = current_register_value & ~(
+            new_register_value = current_register_value | (
                 1 << REGISTER_MAP['CONFIG']['MASK_MAX_RT']['OFFSET']
             )
             nrf24l01.w_register('CONFIG', new_register_value.to_bytes(1, 'big'))
@@ -868,7 +868,7 @@ def dump(args, nrf24l01):
     # Special case for if RX_PLD was requested, then read the data from the
     # RX FIFO. (NOTE: Might remove later.)
     if args.register == 'RX_PLD':
-        register_contents = nrf24l01.r_rx_payload(nrf24l01.r_rx_pl_wid())
+        register_contents = nrf24l01.r_rx_payload(32)
     # Read the data from the command and status registers
     else:
         register_contents = nrf24l01.r_register(args.register)
@@ -1005,6 +1005,7 @@ def transmit(args, nrf24l01):
         # NOTE: should probably give a warning that the default is used.
         transmit_payload = args.payload
     print(transmit_payload)
+    nrf24l01.w_register('STATUS', (0x70).to_bytes(1, 'big'))
     packet_bytes = []
     for index, byte in enumerate(transmit_payload):
         packet_bytes.append(byte.to_bytes(1, 'big'))
@@ -1129,6 +1130,9 @@ def main():
     # # The `config` command:
     elif args.command_name == 'config':
         config(args, nrf24l01)
+    ############################################################################
+    elif args.command_name == 'dump':
+        dump(args, nrf24l01)
     ############################################################################
     elif args.command_name == 'load':
         load(args, nrf24l01)
