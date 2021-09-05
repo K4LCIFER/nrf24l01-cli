@@ -40,7 +40,7 @@ def get_args():
         description="Debug and control an nRF24L01 module from the command \
                 line."
     )
-    parser.add_argument('--version', action='store_true')
+    parser.add_argument('--version', '-v', action='store_true')
 
     subparsers = parser.add_subparsers(
         dest='command_name', help="Commands to interract with the nRF24L01."
@@ -1005,6 +1005,7 @@ def transmit(args, nrf24l01):
         # NOTE: should probably give a warning that the default is used.
         transmit_payload = args.payload
     print(transmit_payload)
+    # This clears the interrupt flags. TODO remove magic numbers.
     nrf24l01.w_register('STATUS', (0x70).to_bytes(1, 'big'))
     packet_bytes = []
     for index, byte in enumerate(transmit_payload):
